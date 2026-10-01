@@ -154,3 +154,9 @@ All 9 unit and integration tests pass:
 ## ⚕️ Official Medical Disclaimer
 
 > *This application provides an AI-based statistical risk estimate for educational/research purposes and is not a medical diagnosis. Clinical decisions must be made by qualified healthcare professionals.*
+🌐 Live Deployment
+
+🚀 Live Website:
+https://hospital-management-disease-predict.vercel.app/
+
+The application is deployed on Vercel and can be accessed directly from a web browser.
