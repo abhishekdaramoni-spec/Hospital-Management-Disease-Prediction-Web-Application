@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result: {{ patient.name }} - Hospital AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Top Action Banner -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('predict') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <h2 class="fw-bold text-dark mb-0">DISEASE RISK PREDICTION RESULT</h2>
+                <span class="badge bg-light text-muted border">PRED-{{ "%05d"|format(prediction.id) }}</span>
+            </div>
+            <p class="text-muted small mt-1 mb-0">
+                Patient: <strong class="text-dark">{{ patient.name }}</strong> (Age {{ patient.age }}, {{ patient.gender }}) &bull; Date: {{ prediction.prediction_date.strftime('%B %d, %Y - %H:%M') }}
+            </p>
+        </div>
+
+        <div class="mt-3 mt-md-0 d-flex gap-2">
+            <a href="{{ url_for('download_report_pdf', prediction_id=prediction.id) }}" class="btn btn-danger shadow-sm">
+                <i class="fa-solid fa-file-pdf me-1"></i>Generate PDF Report
+            </a>
+            <a href="{{ url_for('bayesian_network_page') }}" class="btn btn-outline-primary shadow-sm">
+                <i class="fa-solid fa-diagram-project me-1"></i>View Bayesian Network
+            </a>
+            <a href="{{ url_for('predict') }}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fa-solid fa-rotate-right me-1"></i>New Prediction
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Result Probability Display Card -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card shadow-lg border-0 h-100">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="fa-solid fa-heart-pulse text-danger me-2"></i>Bayesian Disease Risk Probability
+                        </h5>
+                        <span class="badge {% if prediction.risk_level == 'Critical' %}bg-danger{% elif prediction.risk_level == 'High' %}bg-warning text-dark{% elif prediction.risk_level == 'Moderate' %}bg-info text-dark{% else %}bg-success{% endif %} fs-6 px-3 py-1">
+                            {{ prediction.risk_level.upper() }} RISK
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 text-center">
+
+                    <div class="row align-items-center justify-content-center my-3">
+                        <div class="col-sm-6 border-end">
+                            <span class="text-uppercase text-secondary fw-bold small">Disease Probability</span>
+                            <div class="display-3 fw-bold {% if prediction.disease_probability >= 70 %}text-danger{% elif prediction.disease_probability >= 40 %}text-warning{% else %}text-success{% endif %}">
+                                {{ prediction.disease_probability }}%
+                            </div>
+                            <span class="text-muted small">P(Disease | Evidence)</span>
+                        </div>
+
+                        <div class="col-sm-6 mt-3 mt-sm-0">
+                            <span class="text-uppercase text-secondary fw-bold small">No Disease Probability</span>
+                            <div class="display-3 fw-bold text-success">
+                                {{ prediction.no_disease_probability }}%
+                            </div>
+                            <span class="text-muted small">P(Healthy | Evidence)</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Indicator Bar -->
+                    <div class="my-4 px-3">
+                        <div class="progress" style="height: 22px; border-radius: 11px;">
+                            <div class="progress-bar {% if prediction.disease_probability >= 70 %}bg-danger{% elif prediction.disease_probability >= 40 %}bg-warning{% else %}bg-success{% endif %} fw-bold"
+                                 style="width: {{ prediction.disease_probability }}%;">
+                                Disease Risk: {{ prediction.disease_probability }}%
+                            </div>
+                            <div class="progress-bar bg-success fw-bold"
+                                 style="width: {{ prediction.no_disease_probability }}%;">
+                                Healthy: {{ prediction.no_disease_probability }}%
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted mt-2">
+                            <span>0% (Minimal Risk)</span>
+                            <span>50% (Equivocal Baseline)</span>
+                            <span>100% (High Risk Evidence)</span>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Recommendation Box -->
+                    <div class="alert {% if prediction.disease_probability >= 70 %}alert-danger{% elif prediction.disease_probability >= 40 %}alert-warning{% else %}alert-success{% endif %} text-start small mb-0 p-3">
+                        <h6 class="fw-bold alert-heading mb-1">
+                            <i class="fa-solid fa-user-doctor me-1"></i>Clinical Guidance:
+                        </h6>
+                        {% if prediction.disease_probability >= 80 %}
+                            Patient presents with high-risk clinical evidence. Urgent cardiology consultation, coronary evaluation, and intensive risk mitigation recommended.
+                        {% elif prediction.disease_probability >= 60 %}
+                            Patient exhibits significant risk markers. Diagnostic echocardiography, stress testing, and aggressive lifestyle and pharmacological control recommended.
+                        {% elif prediction.disease_probability >= 35 %}
+                            Moderate cardiovascular risk. Routine surveillance, regular blood pressure/lipid panel re-testing, and lifestyle interventions advised.
+                        {% else %}
+                            Low calculated statistical risk based on available evidence. Continue periodic general wellness checkups and healthy diet/exercise habits.
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Vital Clinical Parameters Recorded Card -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fa-solid fa-list-check text-primary me-2"></i>Observed Clinical Evidence
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <ul class="list-group list-group-flush small">
+                        {% if record %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-heart me-2 text-danger"></i>Chest Pain Type (CP):</span>
+                                <strong class="badge bg-light text-dark border">{{ record.cp_label }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-gauge me-2 text-primary"></i>Resting Blood Pressure:</span>
+                                <strong>{{ record.trestbps }} mmHg</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-vial me-2 text-warning"></i>Serum Cholesterol:</span>
+                                <strong>{{ record.chol }} mg/dl</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-bolt me-2 text-info"></i>Max Heart Rate (thalach):</span>
+                                <strong>{{ record.thalach }} bpm</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-chart-line me-2 text-danger"></i>ST Depression (oldpeak):</span>
+                                <strong>{{ record.oldpeak }} mm</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-person-running me-2 text-secondary"></i>Exercise Angina:</span>
+                                <strong>{{ "Yes (Positive)" if record.exang == 1 else "No (Negative)" }}</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                <span class="text-secondary"><i class="fa-solid fa-cube me-2 text-success"></i>Fasting Blood Sugar:</span>
+                                <strong>{{ "> 120 mg/dl" if record.fbs == 1 else "≤ 120 mg/dl" }}</strong>
+                            </li>
+                            {% if record.ck %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-2">
+                                    <span class="text-secondary"><i class="fa-solid fa-dna me-2 text-purple"></i>Creatine Kinase (CK):</span>
+                                    <strong>{{ record.ck }} IU/L</strong>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="list-group-item text-muted">Direct evidence query performed.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="card-footer bg-light text-center small text-muted">
+                    Evidence applied directly to the Bayesian Network DAG
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Important Features Breakdown Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fa-solid fa-magnifying-glass-chart text-primary me-2"></i>Important Features Influencing Risk
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th class="ps-3">Feature Name</th>
+                            <th>Patient Value</th>
+                            <th>Clinical Diagnostic Role</th>
+                            <th>Statistical Relationship to Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-3 fw-bold text-primary">Chest Pain Type (CP)</td>
+                            <td>{{ record.cp_label if record else 'Recorded' }}</td>
+                            <td>Primary diagnostic clinical symptom</td>
+                            <td><span class="badge bg-danger">χ² = 280.98, p &lt; 0.0001</span> (Chi-Square Independence)</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-3 fw-bold text-primary">Max Heart Rate (thalach)</td>
+                            <td>{{ record.thalach if record else 'Recorded' }} bpm</td>
+                            <td>Cardiorespiratory / chronotropic performance</td>
+                            <td><span class="badge bg-danger">Z = 14.86, p &lt; 0.0001</span> (Two-sample Z-test)</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-3 fw-bold text-primary">ST Depression (oldpeak)</td>
+                            <td>{{ record.oldpeak if record else 'Recorded' }} mm</td>
+                            <td>Electrocardiographic ischemic stress marker</td>
+                            <td><span class="badge bg-danger">t = -15.22, p &lt; 0.0001</span> (Welch's T-test)</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-3 fw-bold text-primary">Resting Blood Pressure</td>
+                            <td>{{ record.trestbps if record else 'Recorded' }} mmHg</td>
+                            <td>Systemic vascular resistance / hypertension</td>
+                            <td><span class="badge bg-danger">t = -4.47, p &lt; 0.0001</span> (Two-sample T-test)</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-3 fw-bold text-primary">Serum Cholesterol</td>
+                            <td>{{ record.chol if record else 'Recorded' }} mg/dl</td>
+                            <td>Atherosclerosis and coronary plaque risk factor</td>
+                            <td><span class="badge bg-warning text-dark">Z = -3.20, p = 0.0014</span> (Two-sample Z-test)</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-3 fw-bold text-primary">Patient Age & Sex</td>
+                            <td>{{ patient.age }} yrs / {{ patient.gender }}</td>
+                            <td>Demographic baseline risk distribution</td>
+                            <td><span class="badge bg-info text-dark">χ² = 80.08, p &lt; 0.0001</span> (Sex Chi-Square)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fundamental Rule Distinction Card (P-Value vs Bayesian Probability) -->
+    <div class="card border-primary border-opacity-25 shadow-sm mb-4 bg-primary bg-opacity-10">
+        <div class="card-body p-4">
+            <h5 class="fw-bold text-primary mb-2">
+                <i class="fa-solid fa-graduation-cap me-2"></i>Critical Distinction: Statistical Significance vs Bayesian Disease Probability
+            </h5>
+            <div class="row g-3 small mt-1">
+                <div class="col-md-6">
+                    <div class="p-3 bg-white rounded shadow-xs h-100">
+                        <h6 class="fw-bold text-dark"><i class="fa-solid fa-chart-line text-info me-1"></i>Frequentist p-value (e.g. p = 0.0001):</h6>
+                        <p class="mb-0 text-secondary">
+                            Measures the probability of obtaining test results at least as extreme as the observed cohort data, under the assumption that the null hypothesis $H_0$ is true. <strong>It does NOT measure the probability that the patient has a disease!</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-white rounded shadow-xs h-100">
+                        <h6 class="fw-bold text-dark"><i class="fa-solid fa-brain text-primary me-1"></i>Bayesian Risk Probability (e.g. {{ prediction.disease_probability }}%):</h6>
+                        <p class="mb-0 text-secondary">
+                            Measures this specific patient's conditional posterior probability $P(\text{Disease} \mid \text{Patient Evidence})$ given their observed CP type, blood pressure, cholesterol, heart rate, and demographic profile under the learned DAG joint probability distribution.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mandatory Medical Disclaimer Banner -->
+    <div class="alert alert-secondary py-3 px-4 border-0 small shadow-sm text-center">
+        <i class="fa-solid fa-triangle-exclamation text-warning me-2 fs-5 align-middle"></i>
+        <strong>Medical Disclaimer:</strong> This application provides an AI-based statistical risk estimate for educational/research purposes and is not a medical diagnosis. Clinical decisions must be made by qualified healthcare professionals.
+    </div>
+
+</div>
+{% endblock %}

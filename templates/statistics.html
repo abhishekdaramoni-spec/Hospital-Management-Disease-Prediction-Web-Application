@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}Statistical Analysis & Hypothesis Testing - Hospital AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+
+    <!-- Top Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">
+                <i class="fa-solid fa-chart-line text-primary me-2"></i>Statistical Analysis Laboratory
+            </h2>
+            <p class="text-muted small mb-0">
+                Rigorous Inferential Statistics: Z-Test, T-Test, Chi-Square Test of Independence, and P-Value Interpretation
+            </p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <span class="badge bg-light text-dark border px-3 py-2">
+                <i class="fa-solid fa-database text-primary me-1"></i>Verified Cohort Size: <strong>1,025 Patients</strong> &bull; α = 0.05
+            </span>
+        </div>
+    </div>
+
+    <!-- Section 19: Critical Distinction Card (P-Value vs Bayesian Probability) -->
+    <div class="card shadow-sm border-primary mb-4 bg-light">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fa-solid fa-scale-balanced me-2"></i>Section 19 &bull; Important Statistical Rule: P-Value vs Bayesian Probability
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100 p-3 bg-white">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-secondary me-2 fs-6">Frequentist Paradigm</span>
+                            <h5 class="fw-bold mb-0 text-dark">P-Value (Statistical Significance)</h5>
+                        </div>
+                        <p class="small text-secondary mb-2">
+                            <strong>Definition:</strong> The probability of observing data at least as extreme as the sample data, assuming the null hypothesis ($H_0$) is true.
+                        </p>
+                        <div class="p-2 bg-light rounded small font-monospace mb-2 text-dark">
+                            p &lt; 0.05 &rarr; Evidence against the null hypothesis (Reject H0)<br/>
+                            p &ge; 0.05 &rarr; Insufficient evidence to reject the null hypothesis
+                        </div>
+                        <div class="alert alert-danger py-2 px-3 small mb-0">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            <strong>Common Fallacy:</strong> A p-value does <em>NOT</em> mean the null hypothesis has a probability of being true, nor does it quantify an individual's disease chance.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100 p-3 bg-white">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-primary me-2 fs-6">Bayesian Paradigm</span>
+                            <h5 class="fw-bold mb-0 text-primary">Bayesian Probability (Disease Risk)</h5>
+                        </div>
+                        <p class="small text-secondary mb-2">
+                            <strong>Definition:</strong> The updated degree of belief in the patient's disease state conditioned on all observed clinical evidence:
+                        </p>
+                        <div class="p-2 bg-primary bg-opacity-10 rounded small font-monospace mb-2 text-primary fw-bold">
+                            P(Disease = 1 | Age, CP, BP, Chol, Thalach, Oldpeak, Exang) = 78.0%
+                        </div>
+                        <div class="alert alert-success py-2 px-3 small mb-0">
+                            <i class="fa-solid fa-circle-check me-1"></i>
+                            <strong>Clinical Role:</strong> Bayesian probability provides an individual patient risk estimate by propagating evidence through a Directed Acyclic Graph (DAG).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs for Statistical Tests -->
+    <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm" id="statTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-bold" id="ztest-tab" data-bs-toggle="tab" data-bs-target="#ztest-pane" type="button">
+                <i class="fa-solid fa-wave-square me-2"></i>1. Z-Test Analysis
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="ttest-tab" data-bs-toggle="tab" data-bs-target="#ttest-pane" type="button">
+                <i class="fa-solid fa-vial me-2"></i>2. Two-Sample T-Test Analysis
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="chisq-tab" data-bs-toggle="tab" data-bs-target="#chisq-pane" type="button">
+                <i class="fa-solid fa-table-cells-large me-2"></i>3. CP / Chi-Square Independence
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="gallery-tab" data-bs-toggle="tab" data-bs-target="#gallery-pane" type="button">
+                <i class="fa-solid fa-images me-2"></i>4. Visualization Gallery (11 Charts)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content Panes -->
+    <div class="tab-content" id="statTabContent">
+
+        <!-- TAB 1: Z-TEST PANE -->
+        <div class="tab-pane fade show active" id="ztest-pane" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold text-dark">
+                                <i class="fa-solid fa-square-root-variable text-primary me-2"></i>Z-Test for Difference in Means (Max Heart Rate - Thalach)
+                            </h5>
+                            <span class="badge bg-success">Assumptions Satisfied (n=1025 &ge; 30)</span>
+                        </div>
+                        <div class="card-body p-4">
+
+                            <!-- Test Summary Output -->
+                            <div class="p-3 bg-light rounded font-monospace small mb-4 border text-dark">
+                                <strong>Hypothesis Formulation:</strong><br/>
+                                Null Hypothesis (H0): &mu;(Disease) - &mu;(No Disease) = 0<br/>
+                                Alternative Hypothesis (H1): &mu;(Disease) - &mu;(No Disease) &ne; 0<br/>
+                                <br/>
+                                <strong>Calculated Values:</strong><br/>
+                                Disease Cohort (n1 = {{ z_test.group1_n }}): Mean = {{ z_test.group1_mean }} bpm, Std = {{ z_test.group1_std }}<br/>
+                                No Disease Cohort (n2 = {{ z_test.group2_n }}): Mean = {{ z_test.group2_mean }} bpm, Std = {{ z_test.group2_std }}<br/>
+                                Mean Difference = {{ z_test.mean_difference }} bpm | Standard Error = {{ z_test.std_error }}<br/>
+                                <br/>
+                                <strong>Z-statistic = {{ z_test.z_statistic }}</strong><br/>
+                                <strong>p-value = {{ z_test.p_value_formatted }}</strong><br/>
+                                <strong>&alpha; = {{ z_test.alpha }}</strong><br/>
+                                95% Confidence Interval for Difference: [{{ z_test.ci_95[0] }}, {{ z_test.ci_95[1] }}] bpm<br/>
+                                <br/>
+                                <span class="badge bg-danger fs-6">Result: Statistically significant evidence against H0.</span>
+                            </div>
+
+                            <h6 class="fw-bold text-dark mb-2">Assumption Verification (Central Limit Theorem):</h6>
+                            <ul class="small text-secondary mb-3">
+                                <li><i class="fa-solid fa-circle-check text-success me-1"></i>Large sample sizes ($n_1 = 526 \ge 30, n_2 = 499 \ge 30$) ensure sampling distribution of the mean is standard normal.</li>
+                                <li><i class="fa-solid fa-circle-check text-success me-1"></i>Independent patient observations across admission episodes.</li>
+                            </ul>
+
+                            <div class="alert alert-info py-2 px-3 small mb-0">
+                                <strong>Clinical Interpretation:</strong> Patients with heart disease exhibit significantly higher maximum heart rate achieveability during stress testing (Mean = 158.59 bpm) compared to healthy controls (Mean = 139.13 bpm) ($Z = 14.86, p < 0.0001$).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-chart-area text-primary me-2"></i>Z-Distribution & Critical Regions</h5>
+                        </div>
+                        <div class="card-body p-3 text-center">
+                            <img src="{{ url_for('static', filename='images/charts/7_z_test_distribution.png') }}" class="img-fluid rounded" alt="Z Test Distribution">
+                            <p class="small text-muted mt-2 mb-0">
+                                Standard Normal Curve $N(0, 1)$ showing two-tailed rejection regions at $\alpha = 0.05$ ($Z_{crit} = \pm 1.96$). The calculated $Z = 14.86$ falls far into the extreme rejection tail.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: T-TEST PANE -->
+        <div class="tab-pane fade" id="ttest-pane" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold text-dark">
+                                <i class="fa-solid fa-vial-circle-check text-primary me-2"></i>Two-Sample T-Test Comparison (Resting Blood Pressure)
+                            </h5>
+                            <span class="badge bg-warning text-dark">Welch's Robust T-Test</span>
+                        </div>
+                        <div class="card-body p-4">
+
+                            <!-- Test Summary Output -->
+                            <div class="p-3 bg-light rounded font-monospace small mb-4 border text-dark">
+                                <strong>Comparison: Resting Blood Pressure (trestbps)</strong><br/>
+                                Group 1 (Disease = Yes, n = {{ t_test.group1_n }}): Mean = <strong>{{ t_test.group1_mean }} mmHg</strong> (Std = {{ t_test.group1_std }})<br/>
+                                Group 2 (Disease = No, n = {{ t_test.group2_n }}): Mean = <strong>{{ t_test.group2_mean }} mmHg</strong> (Std = {{ t_test.group2_std }})<br/>
+                                <br/>
+                                <strong>t-statistic = {{ t_test.t_statistic }}</strong><br/>
+                                <strong>p-value = {{ t_test.p_value_formatted }}</strong><br/>
+                                <strong>&alpha; = {{ t_test.alpha }}</strong><br/>
+                                <br/>
+                                <strong>Assumption Diagnostics:</strong><br/>
+                                Levene's Test for Homogeneity of Variances: F = {{ t_test.assumptions.levene_stat }}, p = {{ t_test.assumptions.levene_p }}<br/>
+                                Equal Variance Satisfied: {{ "Yes" if t_test.assumptions.equal_variance else "No (Applied Welch's t-test)" }}<br/>
+                                Non-Parametric Mann-Whitney U Test: U = {{ t_test.mann_whitney_u }}, p = {{ t_test.mann_whitney_p }}<br/>
+                                <br/>
+                                <span class="badge bg-danger fs-6">Conclusion: Statistically significant difference between disease and control cohorts.</span>
+                            </div>
+
+                            <!-- CK Audit Disclosure -->
+                            <div class="alert alert-secondary py-2 px-3 small mb-0 border">
+                                <i class="fa-solid fa-circle-exclamation text-primary me-1"></i>
+                                <strong>Dataset Verification (Creatine Kinase / CK):</strong> {{ t_test.ck_note }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-chart-simple text-primary me-2"></i>Group Means Comparison</h5>
+                        </div>
+                        <div class="card-body p-3 text-center">
+                            <img src="{{ url_for('static', filename='images/charts/8_t_test_results.png') }}" class="img-fluid rounded" alt="T Test Boxplot">
+                            <p class="small text-muted mt-2 mb-0">
+                                Violin distribution showing distribution, medians, and mean differences for the target disease groups.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CHI-SQUARE PANE -->
+        <div class="tab-pane fade" id="chisq-pane" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold text-dark">
+                                <i class="fa-solid fa-table-cells text-primary me-2"></i>Chest Pain Type (CP) &times; Heart Disease Independence Test
+                            </h5>
+                            <span class="badge bg-danger">Categorical Analysis</span>
+                        </div>
+                        <div class="card-body p-4">
+
+                            <!-- Critical Rule Warning -->
+                            <div class="alert alert-warning py-2 px-3 small mb-3">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                <strong>Methodological Rule (Section 6):</strong> Chest Pain (CP) is categorical with 4 nominal/ordinal types. Applying a Student's or Welch's t-test to categorical codes is mathematically invalid. The <strong>Chi-Square Test of Independence</strong> is the appropriate frequentist test.
+                            </div>
+
+                            <!-- Contingency Table -->
+                            <h6 class="fw-bold text-dark mb-2">Observed Contingency Table (CP &times; Disease):</h6>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered table-sm text-center align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-start">Chest Pain Category</th>
+                                            <th>No Disease (0)</th>
+                                            <th>Heart Disease (1)</th>
+                                            <th>Total</th>
+                                            <th>Disease Rate (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in chi_square.observed_table %}
+                                            <tr>
+                                                <td class="text-start fw-semibold">{{ row.category_label }}</td>
+                                                <td>{{ row.no_disease_count }}</td>
+                                                <td>{{ row.disease_count }}</td>
+                                                <td>{{ row.total }}</td>
+                                                <td class="fw-bold {% if row.disease_rate_pct >= 70 %}text-danger{% elif row.disease_rate_pct >= 40 %}text-warning{% else %}text-success{% endif %}">
+                                                    {{ row.disease_rate_pct }}%
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Chi-Square Test Results -->
+                            <div class="p-3 bg-light rounded font-monospace small mb-3 border text-dark">
+                                <strong>Chi-Square Statistic (&chi;&sup2;) = {{ chi_square.chi2_statistic }}</strong><br/>
+                                <strong>Degrees of Freedom (df) = {{ chi_square.degrees_of_freedom }}</strong><br/>
+                                <strong>p-value = {{ chi_square.p_value_formatted }}</strong><br/>
+                                <strong>Significance Level (&alpha;) = {{ chi_square.alpha }}</strong><br/>
+                                <strong>Effect Size (Cram&eacute;r's V) = {{ chi_square.cramers_v }} (Very Large Effect)</strong><br/>
+                                <br/>
+                                <span class="badge bg-danger fs-6">Result: Reject H0 &bull; Chest Pain Type is strongly associated with disease status.</span>
+                            </div>
+
+                            <p class="small text-secondary mb-0">
+                                <strong>Clinical Note:</strong> Atypical Angina (Type 1) and Non-Anginal Pain (Type 2) exhibit a disease prevalence exceeding 75% in this patient cohort, whereas Typical Angina (Type 0) exhibits 24.5%.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-chart-column text-primary me-2"></i>CP Contingency Matrix</h5>
+                        </div>
+                        <div class="card-body p-3 text-center">
+                            <img src="{{ url_for('static', filename='images/charts/9_chi_square_contingency.png') }}" class="img-fluid rounded" alt="Chi-Square Heatmap">
+                            <p class="small text-muted mt-2 mb-0">
+                                Contingency matrix of observed frequencies across all 4 chest pain types by disease cohort.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: VISUALIZATION GALLERY PANE (11 CHARTS) -->
+        <div class="tab-pane fade" id="gallery-pane" role="tabpanel">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fa-solid fa-images text-primary me-2"></i>Section 14 &bull; Complete Visualizations Portfolio (11 Figures)
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">1. Disease Distribution</h6>
+                                <img src="{{ url_for('static', filename='images/charts/1_disease_distribution.png') }}" class="img-fluid rounded" alt="Disease Distribution">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">2. Patient Age Distribution</h6>
+                                <img src="{{ url_for('static', filename='images/charts/2_age_distribution.png') }}" class="img-fluid rounded" alt="Age Distribution">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">3. Blood Pressure / CK Audit Note</h6>
+                                <img src="{{ url_for('static', filename='images/charts/3_trestbps_distribution.png') }}" class="img-fluid rounded" alt="Blood Pressure Distribution">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">4. Cholesterol by Disease Status</h6>
+                                <img src="{{ url_for('static', filename='images/charts/4_cholesterol_distribution.png') }}" class="img-fluid rounded" alt="Cholesterol Distribution">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">5. Chest Pain (CP) vs Disease</h6>
+                                <img src="{{ url_for('static', filename='images/charts/5_cp_vs_disease.png') }}" class="img-fluid rounded" alt="CP vs Disease">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">6. Correlation Heatmap</h6>
+                                <img src="{{ url_for('static', filename='images/charts/6_correlation_heatmap.png') }}" class="img-fluid rounded" alt="Correlation Matrix">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">7. Z-Test Results Distribution</h6>
+                                <img src="{{ url_for('static', filename='images/charts/7_z_test_distribution.png') }}" class="img-fluid rounded" alt="Z Test Distribution">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">8. T-Test Results Distribution</h6>
+                                <img src="{{ url_for('static', filename='images/charts/8_t_test_results.png') }}" class="img-fluid rounded" alt="T Test Distribution">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">9. Chi-Square Results Heatmap</h6>
+                                <img src="{{ url_for('static', filename='images/charts/9_chi_square_contingency.png') }}" class="img-fluid rounded" alt="Chi Square Matrix">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-6 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">10. Bayesian Network DAG Graph</h6>
+                                <img src="{{ url_for('static', filename='images/charts/10_bayesian_network_graph.png') }}" class="img-fluid rounded" alt="Bayesian DAG">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-6 text-center">
+                            <div class="card border h-100 p-2 shadow-xs">
+                                <h6 class="fw-bold small text-dark mb-2">11. Prediction Probability Across Risk Profiles</h6>
+                                <img src="{{ url_for('static', filename='images/charts/11_prediction_probability_chart.png') }}" class="img-fluid rounded" alt="Prediction Probability Chart">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

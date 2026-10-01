@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Patient File: {{ patient.name }} - Hospital AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+
+    <!-- Header & Action Toolbar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('patients') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <h2 class="fw-bold text-dark mb-0">{{ patient.name }}</h2>
+                <span class="badge bg-light text-muted border">PAT-{{ "%05d"|format(patient.id) }}</span>
+            </div>
+            <p class="text-muted small mt-1 mb-0">Registered on {{ patient.created_at.strftime('%B %d, %Y') }}</p>
+        </div>
+        <div class="mt-3 mt-md-0 d-flex gap-2">
+            <a href="{{ url_for('predict', patient_id=patient.id) }}" class="btn btn-primary">
+                <i class="fa-solid fa-stethoscope me-1"></i>Run Bayesian Prediction
+            </a>
+            {% if patient.latest_prediction %}
+                <a href="{{ url_for('download_report_pdf', prediction_id=patient.latest_prediction.id) }}" class="btn btn-outline-danger">
+                    <i class="fa-solid fa-file-pdf me-1"></i>Download Latest Report (PDF)
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Patient Demographics Card -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-id-card text-primary me-2"></i>Patient Profile</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="d-inline-flex p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-2">
+                            <i class="fa-solid fa-user fa-3x"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">{{ patient.name }}</h5>
+                        <p class="text-muted small">{{ patient.age }} Years Old &bull; {{ patient.gender }}</p>
+                    </div>
+
+                    <table class="table table-sm table-borderless small mb-0">
+                        <tr>
+                            <td class="text-muted"><i class="fa-solid fa-droplet text-danger me-2"></i>Blood Group:</td>
+                            <td class="fw-semibold">{{ patient.blood_group }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><i class="fa-solid fa-phone me-2"></i>Phone:</td>
+                            <td class="fw-semibold">{{ patient.phone or 'Not recorded' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><i class="fa-solid fa-envelope me-2"></i>Email:</td>
+                            <td class="fw-semibold">{{ patient.email or 'Not recorded' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><i class="fa-solid fa-person-circle-exclamation me-2"></i>Emergency:</td>
+                            <td class="fw-semibold">{{ patient.emergency_contact or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><i class="fa-solid fa-location-dot me-2"></i>Address:</td>
+                            <td class="fw-semibold">{{ patient.address or 'N/A' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Risk Status Card -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-heart-pulse text-danger me-2"></i>Current Cardiac Risk Status</h5>
+                    {% if patient.latest_prediction %}
+                        <span class="badge bg-light text-muted border">{{ patient.latest_prediction.prediction_date.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if patient.latest_prediction %}
+                        {% set pred = patient.latest_prediction %}
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-5 text-center border-end">
+                                <span class="text-muted small text-uppercase fw-semibold">Bayesian Disease Risk Probability</span>
+                                <div class="display-4 fw-bold {% if pred.disease_probability >= 70 %}text-danger{% elif pred.disease_probability >= 40 %}text-warning{% else %}text-success{% endif %} mt-1">
+                                    {{ pred.disease_probability }}%
+                                </div>
+                                <span class="badge fs-6 px-3 py-1 {% if pred.risk_level == 'Critical' %}bg-danger{% elif pred.risk_level == 'High' %}bg-warning text-dark{% elif pred.risk_level == 'Moderate' %}bg-info text-dark{% else %}bg-success{% endif %}">
+                                    {{ pred.risk_level }} Risk
+                                </span>
+                            </div>
+
+                            <div class="col-md-7 ps-md-4">
+                                <h6 class="fw-bold mb-2">Posterior Odds Decomposition:</h6>
+                                <p class="small text-muted mb-2">
+                                    Computed by exact inference $P(\text{Disease} \mid \mathbf{e})$ across all clinical observation nodes in the Bayesian Network.
+                                </p>
+                                <div class="progress mb-2" style="height: 16px;">
+                                    <div class="progress-bar {% if pred.disease_probability >= 70 %}bg-danger{% elif pred.disease_probability >= 40 %}bg-warning{% else %}bg-success{% endif %}"
+                                         style="width: {{ pred.disease_probability }}%;">
+                                        Disease: {{ pred.disease_probability }}%
+                                    </div>
+                                    <div class="progress-bar bg-light text-dark border-start" style="width: {{ pred.no_disease_probability }}%;">
+                                        Healthy: {{ pred.no_disease_probability }}%
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span>P(Disease) = {{ pred.disease_probability }}%</span>
+                                    <span>P(No Disease) = {{ pred.no_disease_probability }}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('prediction_result', prediction_id=pred.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-file-waveform me-1"></i>View Full Risk Report
+                            </a>
+                            <a href="{{ url_for('download_report_pdf', prediction_id=pred.id) }}" class="btn btn-sm btn-outline-danger">
+                                <i class="fa-solid fa-file-pdf me-1"></i>Download PDF Report
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="fa-solid fa-notes-medical fa-3x mb-2 text-secondary"></i>
+                            <h5>No predictions have been performed for this patient yet</h5>
+                            <p class="small">Input patient clinical vitals and laboratory results to compute Bayesian disease risk.</p>
+                            <a href="{{ url_for('predict', patient_id=patient.id) }}" class="btn btn-primary mt-2">
+                                <i class="fa-solid fa-stethoscope me-1"></i>Run Diagnostic Prediction
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prediction History Table -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Diagnostic Assessment History
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Assessment ID</th>
+                        <th>Assessment Date</th>
+                        <th>Disease Probability</th>
+                        <th>No Disease Probability</th>
+                        <th>Risk Level</th>
+                        <th>Model Version</th>
+                        <th>Evaluating Doctor</th>
+                        <th class="text-end pe-3">Report Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if patient.predictions %}
+                        {% for p in patient.predictions %}
+                            <tr>
+                                <td class="ps-3 fw-mono text-muted">PRED-{{ "%05d"|format(p.id) }}</td>
+                                <td>{{ p.prediction_date.strftime('%B %d, %Y - %H:%M') }}</td>
+                                <td>
+                                    <span class="fw-bold {% if p.disease_probability >= 70 %}text-danger{% elif p.disease_probability >= 40 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ p.disease_probability }}%
+                                    </span>
+                                </td>
+                                <td>{{ p.no_disease_probability }}%</td>
+                                <td>
+                                    <span class="badge {% if p.risk_level == 'Critical' %}bg-danger{% elif p.risk_level == 'High' %}bg-warning text-dark{% elif p.risk_level == 'Moderate' %}bg-info text-dark{% else %}bg-success{% endif %}">
+                                        {{ p.risk_level }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ p.model_version }}</td>
+                                <td>{{ p.evaluating_doctor.name if p.evaluating_doctor else 'Dr. Specialist' }}</td>
+                                <td class="text-end pe-3">
+                                    <a href="{{ url_for('prediction_result', prediction_id=p.id) }}" class="btn btn-sm btn-outline-primary" title="View Report">
+                                        <i class="fa-solid fa-file-waveform"></i>
+                                    </a>
+                                    <a href="{{ url_for('download_report_pdf', prediction_id=p.id) }}" class="btn btn-sm btn-outline-danger" title="Download PDF">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                No historical predictions found.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

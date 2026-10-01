@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Hospital AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4">
+
+    <!-- Top Banner / Title -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">
+                <i class="fa-solid fa-hospital-user text-primary me-2"></i>HOSPITAL AI DASHBOARD
+            </h2>
+            <p class="text-muted small mb-0">
+                Logged in as <strong class="text-dark">{{ current_user.name }}</strong> &bull;
+                <span class="badge {% if current_user.role == 'admin' %}bg-danger{% elif current_user.role == 'doctor' %}bg-primary{% else %}bg-success{% endif %}">
+                    {{ current_user.role.upper() }}
+                </span>
+                &bull; Model: <code>{{ config.MODEL_VERSION if config else 'v1.2.0-DiscreteBayesian' }}</code>
+            </p>
+        </div>
+
+        <div class="mt-3 mt-md-0 d-flex gap-2">
+            {% if current_user.role in ['admin', 'doctor'] %}
+                <a href="{{ url_for('predict') }}" class="btn btn-primary shadow-sm">
+                    <i class="fa-solid fa-stethoscope me-1"></i>New Disease Prediction
+                </a>
+                <a href="{{ url_for('patients') }}" class="btn btn-outline-primary shadow-sm">
+                    <i class="fa-solid fa-user-plus me-1"></i>Register Patient
+                </a>
+            {% endif %}
+            <a href="{{ url_for('statistics_page') }}" class="btn btn-outline-secondary shadow-sm">
+                <i class="fa-solid fa-chart-pie me-1"></i>Statistical Lab
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Key Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card shadow-sm h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Total Patients</span>
+                        <div class="stat-value text-primary mt-1">{{ total_patients }}</div>
+                        <span class="text-success small fw-medium"><i class="fa-solid fa-user-check me-1"></i>Registered In System</span>
+                    </div>
+                    <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3">
+                        <i class="fa-solid fa-hospital-user fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card warning shadow-sm h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Predictions</span>
+                        <div class="stat-value text-dark mt-1">{{ total_predictions }}</div>
+                        <span class="text-muted small fw-medium"><i class="fa-solid fa-brain me-1"></i>Bayesian Inferences</span>
+                    </div>
+                    <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-3">
+                        <i class="fa-solid fa-heart-pulse fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card success shadow-sm h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Doctors</span>
+                        <div class="stat-value text-success mt-1">{{ total_doctors }}</div>
+                        <span class="text-success small fw-medium"><i class="fa-solid fa-user-doctor me-1"></i>Medical Specialists</span>
+                    </div>
+                    <div class="p-3 bg-success bg-opacity-10 text-success rounded-3">
+                        <i class="fa-solid fa-user-doctor fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card danger shadow-sm h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">Today's Patients</span>
+                        <div class="stat-value text-danger mt-1">{{ today_patients }}</div>
+                        <span class="text-muted small fw-medium"><i class="fa-regular fa-calendar-check me-1"></i>Active Today</span>
+                    </div>
+                    <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-3">
+                        <i class="fa-solid fa-calendar-day fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Section: Disease Distribution Chart & Model Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fa-solid fa-chart-column text-primary me-2"></i>Disease Distribution in Verified Cohort
+                    </h5>
+                    <span class="badge bg-light text-secondary border">Dataset n = 1,025</span>
+                </div>
+                <div class="card-body text-center p-3">
+                    <img src="{{ url_for('static', filename='images/charts/1_disease_distribution.png') }}" class="img-fluid rounded shadow-xs" alt="Disease Distribution Chart" style="max-height: 320px;">
+                    <div class="row text-center mt-3 pt-2 border-top">
+                        <div class="col-6">
+                            <span class="text-success fw-bold"><i class="fa-solid fa-circle me-1"></i>No Heart Disease:</span>
+                            <strong>499 patients (48.7%)</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-danger fw-bold"><i class="fa-solid fa-circle me-1"></i>Heart Disease:</span>
+                            <strong>526 patients (51.3%)</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="fa-solid fa-brain text-primary me-2"></i>Bayesian Model Diagnostic Health
+                    </h5>
+                    <span class="badge bg-success">Trained & Validated</span>
+                </div>
+                <div class="card-body p-3">
+                    <ul class="list-group list-group-flush small mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-bullseye text-primary me-2"></i>Hold-out Test Accuracy</span>
+                            <span class="badge bg-primary rounded-pill fs-6">{{ model_metrics.accuracy }}%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-magnifying-glass-chart text-info me-2"></i>ROC - Area Under Curve</span>
+                            <span class="badge bg-info text-dark rounded-pill fs-6">{{ model_metrics.roc_auc }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-filter text-success me-2"></i>Model Precision / Recall</span>
+                            <span class="fw-bold">{{ model_metrics.precision }}% / {{ model_metrics.recall }}%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-balance-scale text-warning me-2"></i>Brier Calibration Score</span>
+                            <span class="fw-bold">{{ model_metrics.brier_score }} (Excellent)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-vial-circle-check text-secondary me-2"></i>Dataset CK Biomarker Audit</span>
+                            <span class="badge bg-light text-secondary border">Audited: CK Absent</span>
+                        </li>
+                    </ul>
+
+                    <div class="alert alert-primary py-2 px-3 small mb-0">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        <strong>Statistical Rule:</strong> Frequentist p-values (e.g. Z-test, t-test, Chi-square) determine feature significance; the Bayesian Network computes patient posterior disease risk $P(\text{Disease} \mid \text{Evidence})$.
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 pt-0">
+                    <a href="{{ url_for('bayesian_network_page') }}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fa-solid fa-diagram-project me-1"></i>Inspect Bayesian Network DAG & CPDs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Predictions Table -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Recent Predictions
+            </h5>
+            {% if current_user.role in ['admin', 'doctor'] %}
+                <a href="{{ url_for('predict') }}" class="btn btn-sm btn-primary">
+                    <i class="fa-solid fa-plus me-1"></i>New Prediction
+                </a>
+            {% endif %}
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Patient</th>
+                        <th>Age / Sex</th>
+                        <th>Disease Probability</th>
+                        <th>Risk Stratification</th>
+                        <th>Attending Doctor</th>
+                        <th>Prediction Date</th>
+                        <th class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_predictions %}
+                        {% for pred in recent_predictions %}
+                            <tr>
+                                <td class="ps-3 fw-semibold">
+                                    <a href="{{ url_for('patient_detail', patient_id=pred.patient_id) }}" class="text-decoration-none text-primary">
+                                        <i class="fa-solid fa-user-circle me-1"></i>{{ pred.patient.name }}
+                                    </a>
+                                </td>
+                                <td>{{ pred.patient.age }} yrs / {{ pred.patient.gender }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center" style="max-width: 140px;">
+                                        <span class="fw-bold me-2">{{ pred.disease_probability }}%</span>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar {% if pred.disease_probability >= 75 %}bg-danger{% elif pred.disease_probability >= 50 %}bg-warning{% else %}bg-success{% endif %}"
+                                                 style="width: {{ pred.disease_probability }}%;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge {% if pred.risk_level == 'Critical' %}bg-danger{% elif pred.risk_level == 'High' %}bg-warning text-dark{% elif pred.risk_level == 'Moderate' %}bg-info text-dark{% else %}bg-success{% endif %}">
+                                        {{ pred.risk_level }}
+                                    </span>
+                                </td>
+                                <td>{{ pred.evaluating_doctor.name if pred.evaluating_doctor else 'Dr. Specialist' }}</td>
+                                <td class="text-muted small">{{ pred.prediction_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td class="text-end pe-3">
+                                    <a href="{{ url_for('prediction_result', prediction_id=pred.id) }}" class="btn btn-sm btn-outline-primary" title="View Full Report">
+                                        <i class="fa-solid fa-file-waveform"></i>
+                                    </a>
+                                    <a href="{{ url_for('download_report_pdf', prediction_id=pred.id) }}" class="btn btn-sm btn-outline-secondary" title="Download PDF Report">
+                                        <i class="fa-solid fa-file-pdf text-danger"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-clipboard-list fa-2x mb-2 text-secondary"></i>
+                                <p class="mb-1">No clinical predictions recorded yet.</p>
+                                {% if current_user.role in ['admin', 'doctor'] %}
+                                    <a href="{{ url_for('predict') }}" class="btn btn-sm btn-primary mt-2">Run First Prediction</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
